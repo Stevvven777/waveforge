@@ -1,5 +1,6 @@
 #include "wforge/scene.h"
 #include "wforge/assets.h"
+#include "wforge/version.h"
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Window.hpp>
@@ -37,7 +38,7 @@ sf::RenderWindow createWindow(Scene &scene, int scale) {
 	scale = automaticScale(width, height, scale);
 	sf::Vector2u window_size(width * scale, height * scale);
 	sf::RenderWindow window(
-		sf::VideoMode(window_size), "Waveforge " WAVEFORGE_VERSION "alpha",
+		sf::VideoMode(window_size), "Waveforge " WAVEFORGE_VERSION,
 		sf::Style::Titlebar | sf::Style::Close
 	);
 	window.setFramerateLimit(24);
@@ -111,6 +112,10 @@ void SceneManager::changeScene(Scene new_scene) {
 	_scene_changed = true;
 }
 
+void SceneManager::setWindowTitle(std::string title) {
+	window.setTitle(title);
+}
+
 void SceneManager::handleEvent(sf::Event &evt) {
 	_current_scene->handleEvent(*this, evt);
 }
@@ -122,7 +127,7 @@ void SceneManager::tick() {
 		return;
 	}
 
-	bgm.step();
+	BGMManager::instance().step();
 	window.clear(sf::Color::White);
 	_current_scene->render(*this, window, _scale);
 

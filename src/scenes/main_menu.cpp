@@ -1,7 +1,9 @@
 #include "wforge/assets.h"
 #include "wforge/audio.h"
+#include "wforge/colorpalette.h"
 #include "wforge/save.h"
 #include "wforge/scene.h"
+#include "wforge/version.h"
 #include <cstdlib>
 #include <format>
 #include <nlohmann/json.hpp>
@@ -14,6 +16,7 @@ namespace {
 enum MainMenuButton {
 	PLAY = 0,
 	SETTINGS,
+	HELP,
 	EXIT,
 	BUTTON_COUNT
 };
@@ -32,7 +35,7 @@ MainMenu::MainMenu()
 
 	const auto &textures = json_data.at("textures");
 	_background_texture = &AssetsManager::instance().getAsset<sf::Texture>(
-		textures.at("background")
+		textures.at("background").get<std::string_view>()
 	);
 
 	if (_background_texture->getSize().x != _width
@@ -54,19 +57,12 @@ MainMenu::MainMenu()
 		desc.x = data.at("x");
 		desc.y = data.at("y");
 		desc.size = data.at("size");
-		desc.color = sf::Color(
-			data.at("color").at(0), data.at("color").at(1),
-			data.at("color").at(2), data.at("color").at(3)
-		);
-		desc.active_color = sf::Color(
-			data.at("active-color").at(0), data.at("active-color").at(1),
-			data.at("active-color").at(2), data.at("active-color").at(3)
-		);
 		return desc;
 	};
 
 	_play_button = parseButtonDescriptor(buttons.at("play"));
 	_settings_button = parseButtonDescriptor(buttons.at("settings"));
+	_help_button = parseButtonDescriptor(buttons.at("help"));
 	_exit_button = parseButtonDescriptor(buttons.at("exit"));
 
 	_version_text = UITextDescriptor::fromJson(json_data.at("version-text"));
@@ -77,7 +73,8 @@ std::array<int, 2> MainMenu::size() const {
 }
 
 void MainMenu::setup(SceneManager &mgr) {
-	mgr.bgm.setCollection("background/main-menu-music");
+	mgr.setWindowTitle("Waveforge " WAVEFORGE_VERSION);
+	BGMManager::instance().setCollection("background/main-menu-music");
 }
 
 void MainMenu::handleEvent(SceneManager &mgr, sf::Event &evt) {
@@ -114,12 +111,16 @@ void MainMenu::handleEvent(SceneManager &mgr, sf::Event &evt) {
 				mgr.changeScene(pro::make_proxy<SceneFacade, SettingsMenu>());
 				return;
 
+			case MainMenuButton::HELP:
+				mgr.changeScene(pro::make_proxy<SceneFacade, Help>());
+				return;
+
 			case MainMenuButton::EXIT:
 				std::exit(0);
 				return;
 
 			default:
-				// Errorneous state?
+				// Erroneous state?
 				_current_button_index = MainMenuButton::PLAY;
 				break;
 			}
@@ -151,7 +152,7 @@ void MainMenu::render(
 	// Render buttons
 	auto renderButton = [&](std::string_view label,
 	                        const ButtonDescriptor &desc, bool is_active) {
-		sf::Color color = is_active ? desc.active_color : desc.color;
+		sf::Color color = is_active ? ui_active_color : ui_text_color(255);
 		font.renderText(
 			target, std::string(label), color, desc.x, desc.y, scale, desc.size
 		);
@@ -159,13 +160,17 @@ void MainMenu::render(
 
 	auto &save = SaveData::instance();
 	renderButton(
-		save.completed_levels >= 0 ? "Play" : "New Game", _play_button,
+		save.isFirstLaunch() ? "New Game" : "Play", _play_button,
 		_current_button_index == MainMenuButton::PLAY
 	);
 
 	renderButton(
 		"Settings", _settings_button,
 		_current_button_index == MainMenuButton::SETTINGS
+	);
+
+	renderButton(
+		"Help", _help_button, _current_button_index == MainMenuButton::HELP
 	);
 
 	renderButton(

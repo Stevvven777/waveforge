@@ -1,4 +1,5 @@
 #include "wforge/save.h"
+#include "wforge/version.h"
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -46,7 +47,7 @@ fs::path resolveSaveFilePath() noexcept {
 			result = fs::current_path();
 		}
 	}
-	return result / "save.json";
+	return result / "save-" WAVEFORGE_VERSION ".json";
 }
 
 fs::path saveFilePath() noexcept {
@@ -94,7 +95,7 @@ SaveData &SaveData::instance() noexcept {
 			}
 		}
 
-		// Please don't relay on this saving mechanism
+		// Please don't rely on this saving mechanism
 		// it only works as an extra safeguard against data loss
 		// Please save manually whenever change is made
 		std::atexit([]() {
@@ -140,6 +141,10 @@ void SaveData::resetAll() {
 	completed_levels = 0;
 	user_settings = UserSettings::defaultSettings();
 	save();
+}
+
+bool SaveData::isFirstLaunch() const noexcept {
+	return completed_levels == 0;
 }
 
 UserSettings UserSettings::defaultSettings() noexcept {

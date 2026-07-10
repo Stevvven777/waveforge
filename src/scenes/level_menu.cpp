@@ -30,6 +30,7 @@ LevelSelectionMenu::LevelSelectionMenu()
 	_level_difficulty = UITextDescriptor::fromJson(
 		json_data.at("level-difficulty")
 	);
+	_play_hint = UITextDescriptor::fromJson(json_data.at("play-hint"));
 	_enter_hint = UITextDescriptor::fromJson(json_data.at("enter-hint"));
 
 	for (const auto &btn : json_data.at("level-buttons")) {
@@ -53,7 +54,7 @@ LevelSelectionMenu::LevelSelectionMenu()
 	const auto &texture_data = json_data.at("texture");
 	auto loadTexture = [&](const std::string &key) {
 		return &AssetsManager::instance().getAsset<sf::Texture>(
-			texture_data.at(key)
+			texture_data.at(key).get<std::string_view>()
 		);
 	};
 
@@ -76,7 +77,8 @@ std::array<int, 2> LevelSelectionMenu::size() const {
 }
 
 void LevelSelectionMenu::setup(SceneManager &mgr) {
-	mgr.bgm.setCollection("background/main-menu-music");
+	BGMManager::instance().setCollection("background/main-menu-music");
+	mgr.setWindowTitle("Level Menu");
 }
 
 void LevelSelectionMenu::handleEvent(SceneManager &mgr, sf::Event &evt) {
@@ -94,7 +96,8 @@ void LevelSelectionMenu::handleEvent(SceneManager &mgr, sf::Event &evt) {
 		case sf::Keyboard::Key::Right:
 		case sf::Keyboard::Key::D:
 			UISounds::instance().forward.play();
-			if (_selected_index + 1 <= save.completed_levels) {
+			if (_selected_index + 1 <= save.completed_levels
+			    && _selected_index + 1 < _level_seq.levels.size()) {
 				_selected_index++;
 			}
 			break;
@@ -102,6 +105,7 @@ void LevelSelectionMenu::handleEvent(SceneManager &mgr, sf::Event &evt) {
 		case sf::Keyboard::Key::Enter:
 		case sf::Keyboard::Key::Space:
 			if (_selected_index <= save.completed_levels) {
+				UISounds::instance().forward.play();
 				if (save.user_settings.skip_animations) {
 					mgr.changeScene(
 						pro::make_proxy<SceneFacade, LevelPlaying>(
@@ -149,8 +153,10 @@ void LevelSelectionMenu::render(
 	int duck_btn_index = ideal_duck_btn_index;
 	if (_selected_index < ideal_duck_btn_index) {
 		duck_btn_index = _selected_index;
-	} else if (_selected_index + (btn_cnt - ideal_duck_btn_index)
-	           > _level_seq.levels.size()) {
+	} else if (
+		_selected_index + (btn_cnt - ideal_duck_btn_index)
+		> _level_seq.levels.size()
+	) {
 		duck_btn_index = btn_cnt - (_level_seq.levels.size() - _selected_index);
 	}
 	int first_btn_level = _selected_index - duck_btn_index;
@@ -271,7 +277,8 @@ void LevelSelectionMenu::render(
 		);
 
 		// Render enter hint
-		_enter_hint.render(target, font, "[ENTER]", scale);
+		_play_hint.render(target, font, "Play", scale);
+		_enter_hint.render(target, font, "[Enter]", scale);
 	}
 }
 

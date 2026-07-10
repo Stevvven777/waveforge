@@ -66,6 +66,7 @@ public:
 	void changeScene(Scene new_scene);
 	void handleEvent(sf::Event &evt);
 	void tick();
+	void setWindowTitle(std::string title);
 
 	sf::Vector2i mousePosition() const;
 	int scale() const {
@@ -73,13 +74,18 @@ public:
 	}
 
 	sf::RenderWindow window;
-	BGMManager bgm;
 
 private:
 	Scene _current_scene;
 	bool _scene_changed;
 	int _config_scale;
 	int _scale;
+};
+
+struct ButtonDescriptor {
+	int x;
+	int y;
+	int size;
 };
 
 namespace scene {
@@ -96,6 +102,9 @@ struct LevelPlaying {
 		const SceneManager &mgr, sf::RenderTarget &target, int scale
 	) const;
 
+	void pause(SceneManager &mgr) noexcept;
+	void unpause(SceneManager &mgr) noexcept;
+
 private:
 	void _restartLevel(SceneManager &mgr, bool is_failed = true);
 
@@ -105,6 +114,12 @@ private:
 	int _hint_type;
 	int _hint_opacity;
 	PixelFont &font;
+	bool _paused;
+
+	// Paused Menu
+	int _paused_menu_current_button_index;
+	bool _show_help;
+	sf::Texture *_help_texture;
 };
 
 struct DuckDeath {
@@ -213,6 +228,7 @@ private:
 	UITextDescriptor _level_title;
 	UITextDescriptor _level_desc;
 	UITextDescriptor _level_difficulty;
+	UITextDescriptor _play_hint;
 	UITextDescriptor _enter_hint;
 	std::vector<std::array<int, 2>> _level_button;
 	std::vector<std::array<int, 2>> _level_links;
@@ -242,17 +258,10 @@ private:
 	const PixelFont &font;
 	sf::Texture *_background_texture;
 
-	struct ButtonDescriptor {
-		int x;
-		int y;
-		int size;
-		sf::Color color;
-		sf::Color active_color;
-	};
-
 	int _current_button_index;
 	ButtonDescriptor _play_button;
 	ButtonDescriptor _settings_button;
+	ButtonDescriptor _help_button;
 	ButtonDescriptor _exit_button;
 	UITextDescriptor _version_text;
 };
@@ -319,6 +328,23 @@ private:
 	sf::Color _credits_color;
 
 	std::vector<std::pair<std::string, std::string>> _content;
+};
+
+struct Help {
+	Help();
+
+	std::array<int, 2> size() const;
+	void setup(SceneManager &mgr);
+	void handleEvent(SceneManager &mgr, sf::Event &evt);
+	void step(SceneManager &mgr);
+	void render(
+		const SceneManager &mgr, sf::RenderTarget &target, int scale
+	) const;
+
+private:
+	sf::Texture *_background_texture;
+	int _width;
+	int _height;
 };
 
 } // namespace scene

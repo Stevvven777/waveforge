@@ -436,6 +436,24 @@
 			"description": "Creating level link texture"
 		},
 		{
+			"id": "ui/help/raw",
+			"type": "image",
+			"file": "ui/help.png",
+			"description": "Loading help background image"
+		},
+		{
+			"id": "ui/help",
+			"type": "create-texture",
+			"input": "ui/help/raw",
+			"description": "Creating help background texture"
+		},
+		{
+			"id": "ui-config/help",
+			"type": "json",
+			"file": "ui/help.json",
+			"description": "Loading help UI configuration"
+		},
+		{
 			"id": "ui-config/level-menu",
 			"type": "json",
 			"file": "ui/level-menu.json",

@@ -23,7 +23,10 @@ struct UISounds {
 
 class BGMManager {
 public:
-	BGMManager() noexcept;
+	BGMManager(const BGMManager &) = delete;
+	BGMManager &operator=(const BGMManager &) = delete;
+	BGMManager(BGMManager &&) = delete;
+	BGMManager &operator=(BGMManager &&) = delete;
 
 	static BGMManager &instance() noexcept;
 
@@ -33,8 +36,13 @@ public:
 	void fadeInCurrent(int duration_ticks, float starting_volume);
 	void step();
 	void nextMusic();
+	void setVolume(float volume);
+
+	bool isEmpty() const noexcept;
 
 private:
+	BGMManager() noexcept;
+
 	float _cur_volume;
 	float _volume_delta;
 	sf::Music *_cur_bgm;

@@ -20,11 +20,11 @@
 namespace wf {
 
 bool isDenser(PixelType a, PixelType b) noexcept {
-	return static_cast<std::uint8_t>(a) > static_cast<std::uint8_t>(b);
+	return std::to_underlying(a) > std::to_underlying(b);
 }
 
 bool isDenserOrEqual(PixelType a, PixelType b) noexcept {
-	return static_cast<std::uint8_t>(a) >= static_cast<std::uint8_t>(b);
+	return std::to_underlying(a) >= std::to_underlying(b);
 }
 
 PixelWorld::PixelWorld() noexcept: _width(0), _height(0) {}
@@ -50,7 +50,7 @@ PixelTag PixelWorld::tagOf(int x, int y) const noexcept {
 			"{}, height = {}\n",
 			x, y, _width, _height
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -65,7 +65,7 @@ PixelTag &PixelWorld::tagOf(int x, int y) noexcept {
 			"{}, height = {}\n",
 			x, y, _width, _height
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -81,7 +81,7 @@ PixelElement &PixelWorld::elementOf(int x, int y) noexcept {
 			"{}, height = {}\n",
 			x, y, _width, _height
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -96,7 +96,7 @@ StaticPixelTag PixelWorld::staticTagOf(int x, int y) const noexcept {
 			"width = {}, height = {}\n",
 			x, y, _width, _height
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -111,7 +111,7 @@ StaticPixelTag &PixelWorld::staticTagOf(int x, int y) noexcept {
 			"width = {}, height = {}\n",
 			x, y, _width, _height
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -249,7 +249,7 @@ void PixelWorld::renderToBuffer(std::span<std::uint8_t> buf) const noexcept {
 			"{}\n",
 			_width * _height * 4, buf.size()
 		);
-		cpptrace::generate_trace().print();
+		cpptrace::generate_trace().print(std::cerr);
 		std::abort();
 	}
 #endif
@@ -278,8 +278,9 @@ void PixelWorld::renderToBuffer(std::span<std::uint8_t> buf) const noexcept {
 			color = laserBlendedColorOfIndex(color_idx);
 		} else if (_tags[i].electric_power >= render_electric_power_threshold) {
 			color = colorPaletteOfIndex(color_idx).active_color;
-		} else if (_tags[i].type == PixelType::Air
-		           && _static_tags[i].laser_stroke) {
+		} else if (
+			_tags[i].type == PixelType::Air && _static_tags[i].laser_stroke
+		) {
 			color = colorOfName("LaserStroke");
 		} else {
 			color = colorOfIndex(color_idx);

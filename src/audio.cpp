@@ -120,6 +120,19 @@ void BGMManager::step() {
 	}
 }
 
+void BGMManager::setVolume(float volume) {
+	{
+		_cur_volume = volume;
+		if (_cur_bgm) {
+			_cur_bgm->setVolume(_cur_volume);
+		}
+	}
+}
+
+bool BGMManager::isEmpty() const noexcept {
+	return _collection == nullptr;
+}
+
 void BGMManager::nextMusic() {
 	if (!_collection) {
 		return;

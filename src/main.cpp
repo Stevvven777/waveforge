@@ -1,6 +1,7 @@
 #include "wforge/assets.h"
 #include "wforge/save.h"
 #include "wforge/scene.h"
+#include "wforge/version.h"
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/RenderTexture.hpp>
@@ -13,7 +14,7 @@
 #include <iostream>
 #include <proxy/proxy.h>
 
-void entry(const std::string &level_id, int scale_config);
+void entry(const std::string &level_id, int scale_config, bool is_first_launch);
 
 std::filesystem::path wf::_executable_path;
 int main(int argc, char **argv) {
@@ -64,7 +65,10 @@ int main(int argc, char **argv) {
 	}
 
 	CPPTRACE_TRY {
-		entry(program.get<std::string>("level"), program.get<int>("--scale"));
+		entry(
+			program.get<std::string>("level"), program.get<int>("--scale"),
+			save.isFirstLaunch()
+		);
 	}
 	CPPTRACE_CATCH(const std::exception &e) {
 		std::cerr << "Unhandled exception: " << e.what() << "\n";
@@ -75,15 +79,30 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-void entry(const std::string &level_id, int scale_config) {
+void entry(
+	const std::string &level_id, int scale_config, bool is_first_launch
+) {
+	auto initialScene = [&](const std::string &level_id, bool is_first_launch) {
+		if (level_id == "-") {
+			if (is_first_launch) {
+				return pro::make_proxy<wf::SceneFacade, wf::scene::Help>();
+			} else {
+				return pro::make_proxy<wf::SceneFacade, wf::scene::MainMenu>();
+			}
+		} else {
+			return pro::make_proxy<wf::SceneFacade, wf::scene::LevelPlaying>(
+				level_id
+			);
+		}
+	};
+
 	wf::SceneManager scene_mgr(
-		level_id == "-"
-			? pro::make_proxy<wf::SceneFacade, wf::scene::MainMenu>()
-			: pro::make_proxy<wf::SceneFacade, wf::scene::LevelPlaying>(
-				  level_id
-			  ),
-		scale_config
+		initialScene(level_id, is_first_launch), scale_config
 	);
+
+	if (wf::BGMManager::instance().isEmpty()) {
+		wf::BGMManager::instance().setCollection("background/main-menu-music");
+	}
 
 	auto &window = scene_mgr.window;
 
